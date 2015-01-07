@@ -196,7 +196,13 @@ static const struct ddr_data ddr3_data = {
 	.datawrsratio0 = MT41J128MJT125_PHY_WR_DATA,
 	.datadldiff0 = PHY_DLL_LOCK_DIFF,
 };
-
+static const struct ddr_data ddr3_beagleblack_data = {
+	.datardsratio0 = MT41K256M16HA125E_RD_DQS,
+	.datawdsratio0 = MT41K256M16HA125E_WR_DQS,
+	.datafwsratio0 = MT41K256M16HA125E_PHY_FIFO_WE,
+	.datawrsratio0 = MT41K256M16HA125E_PHY_WR_DATA,
+	.datadldiff0 = PHY_DLL_LOCK_DIFF,
+};
 static const struct cmd_control ddr3_cmd_ctrl_data = {
 	.cmd0csratio = MT41J128MJT125_RATIO,
 	.cmd0dldiff = MT41J128MJT125_DLL_LOCK_DIFF,
@@ -210,7 +216,19 @@ static const struct cmd_control ddr3_cmd_ctrl_data = {
 	.cmd2dldiff = MT41J128MJT125_DLL_LOCK_DIFF,
 	.cmd2iclkout = MT41J128MJT125_INVERT_CLKOUT,
 };
+static const struct cmd_control ddr3_beagleblack_cmd_ctrl_data = {
+	.cmd0csratio = MT41K256M16HA125E_RATIO,
+	.cmd0dldiff = MT41K256M16HA125E_DLL_LOCK_DIFF,
+	.cmd0iclkout = MT41K256M16HA125E_INVERT_CLKOUT,
 
+	.cmd1csratio = MT41K256M16HA125E_RATIO,
+	.cmd1dldiff = MT41K256M16HA125E_DLL_LOCK_DIFF,
+	.cmd1iclkout = MT41K256M16HA125E_INVERT_CLKOUT,
+
+	.cmd2csratio = MT41K256M16HA125E_RATIO,
+	.cmd2dldiff = MT41K256M16HA125E_DLL_LOCK_DIFF,
+	.cmd2iclkout = MT41K256M16HA125E_INVERT_CLKOUT,
+};
 static struct emif_regs ddr3_emif_reg_data = {
 	.sdram_config = MT41J128MJT125_EMIF_SDCFG,
 	.ref_ctrl = MT41J128MJT125_EMIF_SDREF,
@@ -219,6 +237,15 @@ static struct emif_regs ddr3_emif_reg_data = {
 	.sdram_tim3 = MT41J128MJT125_EMIF_TIM3,
 	.zq_config = MT41J128MJT125_ZQ_CFG,
 	.emif_ddr_phy_ctlr_1 = MT41J128MJT125_EMIF_READ_LATENCY,
+};
+static struct emif_regs ddr3_beagleblack_emif_reg_data = {
+	.sdram_config = MT41K256M16HA125E_EMIF_SDCFG,
+	.ref_ctrl = MT41K256M16HA125E_EMIF_SDREF,
+	.sdram_tim1 = MT41K256M16HA125E_EMIF_TIM1,
+	.sdram_tim2 = MT41K256M16HA125E_EMIF_TIM2,
+	.sdram_tim3 = MT41K256M16HA125E_EMIF_TIM3,
+	.zq_config = MT41K256M16HA125E_ZQ_CFG,
+	.emif_ddr_phy_ctlr_1 = MT41K256M16HA125E_EMIF_READ_LATENCY,
 };
 #endif
 
@@ -298,9 +325,14 @@ void s_init(void)
 		gpio_direction_output(GPIO_DDR_VTT_EN, 1);
 	}
 
-	if (board_is_evm_sk() || board_is_bone_lt())
+	if (board_is_evm_sk())
 		config_ddr(303, MT41J128MJT125_IOCTRL_VALUE, &ddr3_data,
 			   &ddr3_cmd_ctrl_data, &ddr3_emif_reg_data);
+	else if (board_is_bone_lt())
+		config_ddr(400, MT41K256M16HA125E_IOCTRL_VALUE,
+				&ddr3_beagleblack_data,
+				&ddr3_beagleblack_cmd_ctrl_data,
+				&ddr3_beagleblack_emif_reg_data);
 	else
 		config_ddr(266, MT47H128M16RT25E_IOCTRL_VALUE, &ddr2_data,
 			   &ddr2_cmd_ctrl_data, &ddr2_emif_reg_data);
