@@ -86,12 +86,15 @@
 	"findfdt="\
 		"if test $board_name = A335BONE; then " \
 			"setenv fdtfile am335x-bone.dtb; fi; " \
+		"if test $board_name = A335BNLT; then "	\
+			"setenv fdtfile am335x-boneblack.dtb; fi; "	\
 		"if test $board_name = A33515BB; then " \
 			"setenv fdtfile am335x-evm.dtb; fi; " \
 		"if test $board_name = A335X_SK; then " \
 			"setenv fdtfile am335x-evmsk.dtb; fi\0" \
 
 #define CONFIG_BOOTCOMMAND \
+	"run findfdt;" \
 	"mmc dev ${mmcdev}; if mmc rescan; then " \
 		"echo SD/MMC found on device ${mmcdev};" \
 		"if run loadbootenv; then " \
