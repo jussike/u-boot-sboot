@@ -51,6 +51,7 @@ DECLARE_GLOBAL_DATA_PTR;
 static int wait_for_bb(void);
 static u16 wait_for_event(void);
 static void flush_fifo(void);
+static void omap24_i2c_deblock(void);
 
 /*
  * For SPL boot some boards need i2c before SDRAM is initialised so force
@@ -62,13 +63,61 @@ static unsigned int __attribute__((section (".data"))) bus_initialized[I2C_BUS_M
 					{ [0 ... (I2C_BUS_MAX-1)] = 0 };
 static unsigned int __attribute__((section (".data"))) current_bus = 0;
 
+static void omap24_i2c_deblock(void)
+{
+	int i;
+	u16 systest;
+	u16 orgsystest;
+
+	/* set test mode ST_EN = 1 */
+	orgsystest = readw(&i2c_base->systest);
+	systest = orgsystest;
+
+	/* enable testmode */
+	systest |= I2C_SYSTEST_ST_EN;
+	writew(systest, &i2c_base->systest);
+	systest &= ~I2C_SYSTEST_TMODE_MASK;
+	systest |= 3 << I2C_SYSTEST_TMODE_SHIFT;
+	writew(systest, &i2c_base->systest);
+
+	/* set SCL, SDA  = 1 */
+	systest |= I2C_SYSTEST_SCL_O | I2C_SYSTEST_SDA_O;
+	writew(systest, &i2c_base->systest);
+	udelay(10);
+
+	/* toggle scl 9 clocks */
+	for (i = 0; i < 9; i++) {
+		/* SCL = 0 */
+		systest &= ~I2C_SYSTEST_SCL_O;
+		writew(systest, &i2c_base->systest);
+		udelay(10);
+		/* SCL = 1 */
+		systest |= I2C_SYSTEST_SCL_O;
+		writew(systest, &i2c_base->systest);
+		udelay(10);
+	}
+
+	/* send stop */
+	systest &= ~I2C_SYSTEST_SDA_O;
+	writew(systest, &i2c_base->systest);
+	udelay(10);
+	systest |= I2C_SYSTEST_SCL_O | I2C_SYSTEST_SDA_O;
+	writew(systest, &i2c_base->systest);
+	udelay(10);
+
+	/* restore original mode */
+	writew(orgsystest, &i2c_base->systest);
+}
+
 void i2c_init(int speed, int slaveadd)
 {
 	int psc, fsscll, fssclh;
 	int hsscll = 0, hssclh = 0;
 	u32 scll, sclh;
 	int timeout = I2C_TIMEOUT;
+	int deblock = 1;
 
+retry:
 	/* Only handle standard, fast and high speeds */
 	if ((speed != OMAP_I2C_STANDARD) &&
 	    (speed != OMAP_I2C_FAST_MODE) &&
@@ -154,6 +203,7 @@ void i2c_init(int speed, int slaveadd)
 	/* own address */
 	writew(slaveadd, &i2c_base->oa);
 	writew(I2C_CON_EN, &i2c_base->con);
+
 #if defined(CONFIG_OMAP243X) || defined(CONFIG_OMAP34XX)
 	/*
 	 * Have to enable interrupts for OMAP2/3, these IPs don't have
@@ -165,10 +215,16 @@ void i2c_init(int speed, int slaveadd)
 	udelay(1000);
 	flush_fifo();
 	writew(0xFFFF, &i2c_base->stat);
-	writew(0, &i2c_base->cnt);
 
-	if (gd->flags & GD_FLG_RELOC)
-		bus_initialized[current_bus] = 1;
+	/* Handle possible failed I2C state */
+	if (wait_for_bb())
+		if (deblock == 1) {
+			omap24_i2c_deblock();
+			deblock = 0;
+			goto retry;
+		}
+
+	bus_initialized[current_bus] = 1;
 }
 
 static void flush_fifo(void)
@@ -204,8 +260,6 @@ int i2c_probe(uchar chip)
 	if (wait_for_bb())
 		return res;
 
-	/* No data transfer, slave addr only */
-	writew(0, &i2c_base->cnt);
 	/* Set slave address */
 	writew(chip, &i2c_base->sa);
 	/* Stop bit needed here */
@@ -241,7 +295,6 @@ int i2c_probe(uchar chip)
 pr_exit:
 	flush_fifo();
 	writew(0xFFFF, &i2c_base->stat);
-	writew(0, &i2c_base->cnt);
 	return res;
 }
 
@@ -377,7 +430,6 @@ int i2c_read(uchar chip, uint addr, int alen, uchar *buffer, int len)
 rd_exit:
 	flush_fifo();
 	writew(0xFFFF, &i2c_base->stat);
-	writew(0, &i2c_base->cnt);
 	return i2c_error;
 }
 
@@ -458,8 +510,8 @@ int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 		status = wait_for_event();
 		if (status == 0 || status & I2C_STAT_NACK) {
 			i2c_error = 1;
-			printf("i2c_write: error waiting for data ACK (status=0x%x)\n",
-			       status);
+			printf("i2c_write: error waiting for data ACK (status=0x%x) for chip %u\n",
+			       status, chip);
 			goto wr_exit;
 		}
 		if (status & I2C_STAT_XRDY) {
@@ -476,7 +528,6 @@ int i2c_write(uchar chip, uint addr, int alen, uchar *buffer, int len)
 wr_exit:
 	flush_fifo();
 	writew(0xFFFF, &i2c_base->stat);
-	writew(0, &i2c_base->cnt);
 	return i2c_error;
 }
 

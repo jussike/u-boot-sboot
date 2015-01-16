@@ -191,6 +191,11 @@ static void enable_per_clocks(void)
 	while (readl(&cmper->i2c1clkctrl) != PRCM_MOD_EN)
 		;
 
+	/* i2c2 */
+	writel(PRCM_MOD_EN, &cmper->i2c2clkctrl);
+	while (readl(&cmper->i2c2clkctrl) != PRCM_MOD_EN)
+		;
+
 	/* Ethernet */
 	writel(PRCM_MOD_EN, &cmper->cpgmac0clkctrl);
 	while ((readl(&cmper->cpgmac0clkctrl) & CPGMAC0_IDLE) != PRCM_FUNCTL)

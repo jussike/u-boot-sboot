@@ -113,9 +113,17 @@ static struct module_pin_mux i2c0_pin_mux[] = {
 
 static struct module_pin_mux i2c1_pin_mux[] = {
 	{OFFSET(spi0_d1), (MODE(2) | RXACTIVE |
-			PULLUDEN | SLEWCTRL)},	/* I2C_DATA */
+			PULLUP_EN | PULLUDEN | SLEWCTRL)},	/* I2C_DATA */
 	{OFFSET(spi0_cs0), (MODE(2) | RXACTIVE |
-			PULLUDEN | SLEWCTRL)},	/* I2C_SCLK */
+			PULLUP_EN | PULLUDEN | SLEWCTRL)},	/* I2C_SCLK */
+	{-1},
+};
+
+static struct module_pin_mux i2c2_pin_mux[] = {
+	{OFFSET(uart1_ctsn), (MODE(3) | RXACTIVE |
+			PULLUP_EN | PULLUDEN | SLEWCTRL)},/* I2C_DATA */
+	{OFFSET(uart1_rtsn), (MODE(3) | RXACTIVE |
+			PULLUP_EN | PULLUDEN | SLEWCTRL)},/* I2C_SCLK */
 	{-1},
 };
 
@@ -301,6 +309,7 @@ void enable_board_pin_mux(struct am335x_baseboard_id *header)
 	} else if (!strncmp(header->name, "A335BNLT", HDR_NAME_LEN)) {
 		/* Beaglebone LT pinmux */
 		configure_module_pin_mux(i2c1_pin_mux);
+		configure_module_pin_mux(i2c2_pin_mux);
 		configure_module_pin_mux(mii1_pin_mux);
 		configure_module_pin_mux(mmc0_pin_mux);
 		configure_module_pin_mux(mmc1_pin_mux);

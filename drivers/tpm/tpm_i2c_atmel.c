@@ -32,7 +32,7 @@
 
 /** Found in AVR code and in Max's implementation **/
 #ifdef TPM_BUFSIZE
-#undef TPM_BUFISZE
+#undef TPM_BUFSIZE
 #endif
 
 #define TPM_BUFSIZE 1024
