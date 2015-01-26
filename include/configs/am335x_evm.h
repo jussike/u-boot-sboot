@@ -45,6 +45,12 @@
 #define CONFIG_CMD_ASKENV
 #define CONFIG_VERSION_VARIABLE
 
+/* enable booting from zImage */
+#define CONFIG_CMD_BOOTZ
+
+/* enable raw initrd support */
+#define CONFIG_SUPPORT_RAW_INITRD
+
 /* set to negative value for no autoboot */
 #define CONFIG_BOOTDELAY		1
 #define CONFIG_ENV_VARS_UBOOT_CONFIG
@@ -53,7 +59,7 @@
 	"loadaddr=0x80200000\0" \
 	"fdtaddr=0x80F80000\0" \
 	"rdaddr=0x81000000\0" \
-	"bootfile=/boot/uImage\0" \
+	"bootfile=zImage\0" \
 	"fdtfile=\0" \
 	"console=ttyO0,115200n8\0" \
 	"optargs=\0" \
@@ -79,10 +85,10 @@
 	"loaduimage=ext2load mmc ${mmcdev}:2 ${loadaddr} ${bootfile}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
-		"bootm ${loadaddr}\0" \
+		"bootz ${loadaddr}\0" \
 	"ramboot=echo Booting from ramdisk ...; " \
 		"run ramargs; " \
-		"bootm ${loadaddr}\0" \
+		"bootz ${loadaddr}\0" \
 	"findfdt="\
 		"if test $board_name = A335BONE; then " \
 			"setenv fdtfile am335x-bone.dtb; fi; " \
@@ -367,7 +373,7 @@
 #define CONFIG_CMD_TPM
 #define CONFIG_CMD_TPM_TLCL
 #define CONFIG_TPM_I2C_ATMEL
-#define CONFIG_TPM_I2C_BUS 1
+#define CONFIG_TPM_I2C_BUS 2
 #define CONFIG_TPM_I2C_ADDR 0x29
 
 #define CONFIG_SBOOT
@@ -376,8 +382,7 @@
 /* #define CONFIG_SBOOT_DISABLE_ENV_EXTEND */
 #define CONFIG_CMD_SBOOT
 #define CONFIG_SPL_SBOOT_SUPPORT
-#define CONFIG_SBOOT_UBOOT_SEAL_INDEX 0xd000
-#define CONFIG_SBOOT_IMAGE_SEAL_INDEX 0xe000
+#define CONFIG_SBOOT_UBOOT_SEAL_INDEX
 #endif
 
 #endif	/* ! __CONFIG_AM335X_EVM_H */
