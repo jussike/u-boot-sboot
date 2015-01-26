@@ -1,3 +1,7 @@
+
+The goal of this fork is to get u-boot-sboot to work with Beagle Bone Black and Cryptocape.
+
+=============
 ATMEL's AT97SC3204T I2C TPM -- U-boot support
 
 Note: This only includes a board config for the BeagleBone: am335x_evm_tpm
